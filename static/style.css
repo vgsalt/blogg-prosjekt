@@ -1,0 +1,29 @@
+html {
+    font-family: 'Arial', sans-serif;
+}
+
+main {
+    margin: 0 24vw;
+    padding-top: 10px;
+}
+
+.articles {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.article {
+    color: initial;
+    text-decoration: none;
+}
+
+.article-container {
+    background-color: #d0c1c1;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.article-container:hover {
+    background-color: #dbdbdb;
+}

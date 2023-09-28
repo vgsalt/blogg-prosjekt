@@ -1,0 +1,18 @@
+{{ template "header" . }}
+<title>Lag artikkel</title>
+<main>
+    <h1>Lag artikkel</h1>
+    <form action="/post" method="POST">
+        <label for="tittel">Tittel</label>
+        <input type="text" id="tittel" name="tittel" value="Tittel" required><br>
+        <br>
+        <label for="forfatter">Forfatter</label>
+        <input type="text" id="forfatter" name="forfatter" value="Forfatter" required><br>
+        <br>
+        <label for="innhold">Innhold (HTML)</label>
+        <br><br>
+        <textarea type="text" id="innhold" name="innhold" value="Innhold (HTML)" required rows="4" cols="50">I dag...</textarea><br>
+        <br>
+        <input type="submit" id="submit" value="Send">
+    </form>
+</main>

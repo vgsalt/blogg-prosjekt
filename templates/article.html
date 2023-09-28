@@ -1,0 +1,11 @@
+{{template "header" .}}
+<main>
+    <h1>{{.Tittel}}</h1>
+    <p>{{ ConvertToUtc .Dato }}</p>
+    <p>Av {{.Forfatter}}</p>
+    <hr>
+    <article>
+        {{ toHtml ( sanitize .Innhold ) }}
+    </article>
+</main>
+{{ template "footer" .}}

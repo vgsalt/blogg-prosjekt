@@ -1,0 +1,17 @@
+{{ template "header" . }}
+<main>
+    <h1>Velkommen til bloggen min {{.Title}}!</h1>
+    <p>Her skriver jeg om ting.</p>
+    <div class="articles">
+        {{ range .Artikler }}
+        <a href="/artikkel/{{.Tittel}}" class="article">
+            <article class="article-container">
+                <h1>{{.Tittel}}</h1>
+                <p>{{ ConvertToUtc .Dato }}</p>
+                <p>Av {{.Forfatter}}</p>
+            </article>
+        </a>
+        {{end}}
+    </div>
+</main>
+{{ template "footer" . }}
