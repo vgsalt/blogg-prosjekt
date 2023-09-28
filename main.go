@@ -15,25 +15,18 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
-type Page struct {
-	Title    string
-	Artikler []Article
+var funcMap = template.FuncMap{
+	"ConvertToUtc": func(epoch int) time.Time {
+		utcTime := time.Unix(int64(epoch), 0)
+		return utcTime
+	},
+	"sanitize": Sanitize,
+	"toHtml": func(html string) template.HTML {
+		return template.HTML(html)
+	},
 }
 
-type ArticlePage struct {
-	Title     string
-	Tittel    string
-	Dato      int
-	Forfatter string
-	Innhold   template.HTML
-}
-
-type Article struct {
-	Tittel    string
-	Dato      int
-	Forfatter string
-	Innhold   string
-}
+var Tmpl = template.Must(template.New("artikler").Funcs(funcMap).ParseFS(TemplateFolder, "templates/*"))
 
 func main() {
 	// Si ifra til terminalen at bloggen starter.
@@ -45,18 +38,6 @@ func main() {
 		slog.Error("Noe gikk galt med å laste inn .env filen.")
 	}
 
-	funcMap := template.FuncMap{
-		"ConvertToUtc": func(epoch int) time.Time {
-			utcTime := time.Unix(int64(epoch), 0)
-			return utcTime
-		},
-		"sanitize": Sanitize,
-		"toHtml": func(html string) template.HTML {
-			return template.HTML(html)
-		},
-	}
-	var tmpl = template.Must(template.New("artikler").Funcs(funcMap).ParseFS(TemplateFolder, "templates/*"))
-
 	// Koble til PostgreSQL, med URL-en inne i miljøvariablene til PC-en (eller .env)
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -66,6 +47,7 @@ func main() {
 	defer conn.Close(context.Background())
 
 	r := chi.NewRouter()
+
 	// Index-siden.
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		// Spør SQL om alle artiklene.
@@ -74,6 +56,7 @@ func main() {
 			slog.Error("Noe gikk galt mens vi prøvde å hente artikler fra database.", "feil", err)
 			// Si ifra til brukeren at noe gikk galt.
 			w.Write([]byte("Funker ikke :("))
+			return
 		}
 		defer rows.Close()
 
@@ -101,14 +84,14 @@ func main() {
 			Title:    "Testblogg",
 			Artikler: artikler,
 		}
-		if err := tmpl.ExecuteTemplate(w, "index.html", p); err != nil {
+		if err := Tmpl.ExecuteTemplate(w, "index.html", p); err != nil {
 			slog.Error("Oops! Her gikk det noe galt.", err)
 			return
 		}
 	})
 
 	r.Get("/post", func(w http.ResponseWriter, r *http.Request) {
-		if err := tmpl.ExecuteTemplate(w, "post.html", nil); err != nil {
+		if err := Tmpl.ExecuteTemplate(w, "post.html", nil); err != nil {
 			slog.Error("Oops! Her gikk det noe galt.", err)
 			return
 		}
@@ -144,7 +127,7 @@ func main() {
 		// sett Title til Tittel (rart, ikke sant?)
 		ap.Title = ap.Tittel
 
-		if err := tmpl.ExecuteTemplate(w, "article.html", ap); err != nil {
+		if err := Tmpl.ExecuteTemplate(w, "article.html", ap); err != nil {
 			slog.Error("Oops! Her gikk det noe galt.", "error", err)
 			panic(err)
 		}
@@ -152,6 +135,9 @@ func main() {
 
 	// For filer som css, font osv.
 	r.Handle("/static/*", http.FileServer(http.FS(StaticFolder)))
+
+	r.Get("/login", LoginPage)
+	r.Post("/login", LoginPage)
 
 	// forklar hvor serveren skal kjøres. kunne ha brukt egen variabel for dette men
 	// http.Server ser litt finere ut kanskje?
